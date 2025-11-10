@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Play, Heart, Star, Clock, Calendar, User, Eye, Share2, Download } from 'lucide-react';
 import { useMovie } from '../contexts/MovieContext';
 import { useAuth } from '../contexts/AuthContext';
-import MoviePlayer from '../components/movies/MoviePlayer';
+import VideoPlayer from '../components/video/VideoPlayer';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import MovieCard from '../components/movies/MovieCard';
 
@@ -96,7 +96,7 @@ const MovieDetail = () => {
     <div className="min-h-screen">
       {/* Movie Player Modal */}
       {isPlaying && (
-        <MoviePlayer
+        <VideoPlayer
           movie={movie}
           quality={selectedQuality}
           onClose={() => setIsPlaying(false)}
