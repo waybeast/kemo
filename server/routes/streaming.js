@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const streamingService = require('../services/streamingService');
+const vidkingService = require('../services/vidkingService');
 const tmdbService = require('../services/tmdbService');
 const auth = require('../middleware/auth');
 
@@ -151,10 +152,62 @@ router.get('/search', async (req, res) => {
   }
 });
 
+// Get VidKing embed URL for a movie
+router.get('/vidking/:movieId', async (req, res) => {
+  try {
+    const { movieId } = req.params;
+    const { type = 'movie', season, episode } = req.query;
+
+    if (!vidkingService.isEnabled()) {
+      return res.status(503).json({
+        success: false,
+        error: 'VidKing service is not enabled'
+      });
+    }
+
+    // Get embed URL
+    const embedUrl = await vidkingService.getEmbedUrl(
+      movieId,
+      type,
+      season ? parseInt(season) : null,
+      episode ? parseInt(episode) : null
+    );
+
+    // Get sources
+    const sources = await vidkingService.getSources(
+      movieId,
+      type,
+      season ? parseInt(season) : null,
+      episode ? parseInt(episode) : null
+    );
+
+    res.json({
+      success: true,
+      data: {
+        embedUrl,
+        sources,
+        provider: 'vidking',
+        tmdbId: movieId
+      }
+    });
+  } catch (error) {
+    console.error('VidKing embed error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to get VidKing embed'
+    });
+  }
+});
+
 // Test provider availability
 router.get('/test', async (req, res) => {
   try {
     const testResults = await streamingService.testProviders();
+    
+    // Add VidKing status
+    if (vidkingService.isEnabled()) {
+      testResults.vidking = await vidkingService.checkStatus();
+    }
 
     res.json({
       success: true,
