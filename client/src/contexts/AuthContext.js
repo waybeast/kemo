@@ -89,8 +89,8 @@ export const AuthProvider = ({ children }) => {
 
   // Login mutation
   const loginMutation = useMutation(
-    async ({ email, password, rememberMe }) => {
-      const response = await axios.post('/api/auth/login', { email, password, rememberMe });
+    async ({ username, password, rememberMe }) => {
+      const response = await axios.post('/api/auth/login', { username, password, rememberMe });
       return response.data.data;
     },
     {

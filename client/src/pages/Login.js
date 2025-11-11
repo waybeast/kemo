@@ -82,7 +82,12 @@ const Login = () => {
 
     setIsLoading(true);
     try {
-      await login(formData.email, formData.password, formData.rememberMe);
+      // Backend expects 'username' field which can be email or username
+      await login({ 
+        username: formData.email, // Backend accepts email in username field
+        password: formData.password, 
+        rememberMe: formData.rememberMe 
+      });
       toast.success('Welcome back!');
       
       // Redirect to the page they were trying to access
