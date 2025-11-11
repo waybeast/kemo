@@ -26,7 +26,7 @@ const MoviePlayer = () => {
   const [streamingSources, setStreamingSources] = useState([]);
   const [selectedSource, setSelectedSource] = useState(null);
   const [watchProgress, setWatchProgress] = useState(null);
-  const [showSourceManager, setShowSourceManager] = useState(false);
+  const [showSourceManager, setShowSourceManager] = useState(true); // Auto-show source manager
 
   const loadMovie = useCallback(async () => {
     try {
@@ -286,9 +286,9 @@ const MoviePlayer = () => {
         </AnimatePresence>
       </div>
 
-      {/* Movie Info Overlay */}
+      {/* Movie Info Overlay - Hide when source manager is open or when video is selected */}
       <AnimatePresence>
-        {!showSourceManager && (
+        {!showSourceManager && !selectedSource && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

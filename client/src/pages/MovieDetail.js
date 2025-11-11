@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Play, Heart, Star, Clock, Calendar, User, Eye, Share2, Download } from 'lucide-react';
 import { useMovie } from '../contexts/MovieContext';
@@ -10,6 +10,7 @@ import MovieCard from '../components/movies/MovieCard';
 
 const MovieDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { useMovieById, useMoviesByCategory, trackPageView } = useMovie();
   const { isAuthenticated, addToWatchlist, removeFromWatchlist, addToHistory } = useAuth();
   const [isPlaying, setIsPlaying] = useState(false);
@@ -35,10 +36,8 @@ const MovieDetail = () => {
   }, [movie, trackPageView, isAuthenticated, movieId]);
 
   const handlePlay = () => {
-    setIsPlaying(true);
-    if (isAuthenticated) {
-      addToHistory(movieId, 0);
-    }
+    // Navigate to the watch page instead of playing inline
+    navigate(`/watch/${movieId}`);
   };
 
   const handleWatchlistToggle = () => {

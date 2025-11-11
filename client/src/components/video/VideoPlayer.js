@@ -408,8 +408,8 @@ const VideoPlayer = ({
       <div className="relative w-full h-full">
         {renderVideoPlayer()}
         
-        {/* Loading Overlay */}
-        {isLoading && (
+        {/* Loading Overlay - Only show for non-iframe players */}
+        {isLoading && playerType !== 'iframe' && (
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
             <div className="text-center text-white">
               <Loader2 className="w-12 h-12 mx-auto mb-4 animate-spin text-blue-500" />
@@ -436,9 +436,9 @@ const VideoPlayer = ({
         )}
       </div>
 
-      {/* Controls Overlay */}
+      {/* Controls Overlay - Only show for non-iframe players */}
       <AnimatePresence>
-        {showControls && (
+        {showControls && playerType !== 'iframe' && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
