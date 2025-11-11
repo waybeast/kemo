@@ -25,7 +25,7 @@ const MovieDetail = () => {
   const movieId = movie?.id || movie?._id || movie?.tmdbId;
 
   useEffect(() => {
-    if (movie) {
+    if (movie && movieId) {
       trackPageView({
         page: 'movie-detail',
         movieId: movieId,
@@ -33,7 +33,8 @@ const MovieDetail = () => {
         userId: isAuthenticated ? 'authenticated' : 'anonymous'
       });
     }
-  }, [movie, trackPageView, isAuthenticated, movieId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, isAuthenticated]); // Only track when id or auth status changes
 
   const handlePlay = () => {
     // Navigate to the watch page instead of playing inline
