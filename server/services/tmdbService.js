@@ -158,6 +158,7 @@ class TMDBService {
   // Transform TMDb movie data to our format
   transformMovieData(tmdbMovie) {
     return {
+      id: tmdbMovie.id, // Add id field for frontend compatibility
       title: tmdbMovie.title,
       originalTitle: tmdbMovie.original_title,
       description: tmdbMovie.overview,

@@ -10,33 +10,34 @@ import MovieCard from '../components/movies/MovieCard';
 
 const MovieDetail = () => {
   const { id } = useParams();
-  const { getMovieById, getMoviesByCategory, trackPageView } = useMovie();
+  const { useMovieById, useMoviesByCategory, trackPageView } = useMovie();
   const { isAuthenticated, addToWatchlist, removeFromWatchlist, addToHistory } = useAuth();
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedQuality, setSelectedQuality] = useState('720p');
   const [isInWatchlist, setIsInWatchlist] = useState(false);
 
-  const { data: movieData, isLoading, error } = getMovieById(id);
-  const { data: relatedData } = getMoviesByCategory('all', 6);
+  const { data: movieData, isLoading, error } = useMovieById(id);
+  const { data: relatedData } = useMoviesByCategory('all', 6);
 
   const movie = movieData?.data;
   const relatedMovies = relatedData?.data || [];
+  const movieId = movie?.id || movie?._id || movie?.tmdbId;
 
   useEffect(() => {
     if (movie) {
       trackPageView({
         page: 'movie-detail',
-        movieId: movie._id,
+        movieId: movieId,
         title: movie.title,
         userId: isAuthenticated ? 'authenticated' : 'anonymous'
       });
     }
-  }, [movie, trackPageView, isAuthenticated]);
+  }, [movie, trackPageView, isAuthenticated, movieId]);
 
   const handlePlay = () => {
     setIsPlaying(true);
     if (isAuthenticated) {
-      addToHistory(movie._id, 0);
+      addToHistory(movieId, 0);
     }
   };
 
@@ -47,10 +48,10 @@ const MovieDetail = () => {
     }
 
     if (isInWatchlist) {
-      removeFromWatchlist(movie._id);
+      removeFromWatchlist(movieId);
       setIsInWatchlist(false);
     } else {
-      addToWatchlist(movie._id);
+      addToWatchlist(movieId);
       setIsInWatchlist(true);
     }
   };

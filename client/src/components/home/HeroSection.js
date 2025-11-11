@@ -44,6 +44,7 @@ const HeroSection = () => {
   }
 
   const movie = featuredMovies[currentMovie];
+  const movieId = movie.id || movie._id || movie.tmdbId;
 
   return (
     <div className="relative h-[70vh] overflow-hidden">
@@ -61,7 +62,7 @@ const HeroSection = () => {
       <div className="relative z-10 h-full flex items-center">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
           <motion.div
-            key={movie._id}
+            key={movieId}
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -50 }}
@@ -98,14 +99,14 @@ const HeroSection = () => {
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
-                to={`/movie/${movie._id}`}
+                to={`/movie/${movieId}`}
                 className="btn btn-primary btn-lg inline-flex items-center justify-center"
               >
                 <Play className="w-5 h-5 mr-2" />
                 Watch Now
               </Link>
               <Link
-                to={`/movie/${movie._id}`}
+                to={`/movie/${movieId}`}
                 className="btn btn-outline btn-lg inline-flex items-center justify-center"
               >
                 More Info

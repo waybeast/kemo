@@ -140,7 +140,9 @@ const movieSchema = new mongoose.Schema({
     default: Date.now
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
 
 // Indexes for better query performance
@@ -150,6 +152,11 @@ movieSchema.index({ views: -1 });
 movieSchema.index({ isActive: 1, isFeatured: 1 });
 movieSchema.index({ isActive: 1, isLatest: 1 });
 movieSchema.index({ isActive: 1, isPopular: 1 });
+
+// Virtual for id field (maps to _id for frontend compatibility)
+movieSchema.virtual('id').get(function() {
+  return this._id.toHexString();
+});
 
 // Virtual for getting primary streaming URL
 movieSchema.virtual('primaryStreamingUrl').get(function() {

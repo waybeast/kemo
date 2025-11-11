@@ -31,8 +31,8 @@ const MoviePlayer = () => {
   const loadMovie = useCallback(async () => {
     try {
       setIsLoading(true);
-      const movieData = await getMovieById(id);
-      setMovie(movieData);
+      const response = await getMovieById(id);
+      setMovie(response.data); // Extract data from response
       
       // Load watch progress if authenticated
       if (isAuthenticated) {
@@ -52,7 +52,7 @@ const MoviePlayer = () => {
 
   const loadWatchProgress = async () => {
     try {
-      const response = await fetch(`/api/auth/progress/${id}`, {
+      const response = await fetch(`/api/streaming/progress/${id}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -60,7 +60,11 @@ const MoviePlayer = () => {
       const data = await response.json();
       
       if (data.success && data.data) {
-        setWatchProgress(data.data);
+        setWatchProgress({
+          lastPosition: data.data.currentPosition || 0,
+          progress: data.data.progress || 0,
+          duration: data.data.duration || 0
+        });
       }
     } catch (error) {
       console.error('Error loading watch progress:', error);
@@ -225,6 +229,7 @@ const MoviePlayer = () => {
             <VideoPlayer
               sources={streamingSources}
               title={movie.title}
+              movieId={id}
               onProgress={handleProgressUpdate}
               onError={handleError}
               initialTime={watchProgress?.lastPosition || 0}

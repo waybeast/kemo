@@ -9,6 +9,9 @@ const MovieCard = ({ movie }) => {
   const { isAuthenticated, addToWatchlist, removeFromWatchlist } = useAuth();
   const [isInWatchlist, setIsInWatchlist] = useState(false); // This would be determined by user's watchlist
   const navigate = useNavigate();
+  
+  // Get consistent movie ID (prefer id, fallback to _id, then tmdbId)
+  const movieId = movie.id || movie._id || movie.tmdbId;
 
   const handleImageError = () => {
     setImageError(true);
@@ -24,10 +27,10 @@ const MovieCard = ({ movie }) => {
     }
 
     if (isInWatchlist) {
-      removeFromWatchlist(movie.id || movie._id);
+      removeFromWatchlist(movieId);
       setIsInWatchlist(false);
     } else {
-      addToWatchlist(movie.id || movie._id);
+      addToWatchlist(movieId);
       setIsInWatchlist(true);
     }
   };
@@ -35,7 +38,7 @@ const MovieCard = ({ movie }) => {
   const handleWatchMovie = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    navigate(`/watch/${movie.id || movie._id}`);
+    navigate(`/watch/${movieId}`);
   };
 
   const formatDuration = (minutes) => {
@@ -50,7 +53,7 @@ const MovieCard = ({ movie }) => {
       whileHover={{ y: -5 }}
       className="movie-card group w-48"
     >
-      <Link to={`/movie/${movie.id || movie._id}`} className="block">
+      <Link to={`/movie/${movieId}`} className="block">
         {/* Movie Poster */}
         <div className="relative overflow-hidden rounded-lg">
           <img
