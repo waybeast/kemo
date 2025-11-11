@@ -156,7 +156,11 @@ const Register = () => {
 
     setIsLoading(true);
     try {
-      await register(formData.username, formData.email, formData.password);
+      await register({
+        username: formData.username,
+        email: formData.email,
+        password: formData.password
+      });
       toast.success('Account created successfully! Welcome to Kemo!');
       
       // Redirect to the page they were trying to access
