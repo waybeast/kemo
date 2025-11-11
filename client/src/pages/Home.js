@@ -13,12 +13,14 @@ const Home = () => {
   const category = searchParams.get('category');
 
   useEffect(() => {
-    trackPageView({
-      page: 'home',
-      category: category || 'all',
-      userId: isAuthenticated ? 'authenticated' : 'anonymous'
-    });
-  }, [category, isAuthenticated, trackPageView]);
+    // Temporarily disable analytics to prevent freezing
+    // trackPageView({
+    //   page: 'home',
+    //   category: category || 'all',
+    //   userId: isAuthenticated ? 'authenticated' : 'anonymous'
+    // });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category, isAuthenticated]); // Removed trackPageView from dependencies
 
   return (
     <div className="min-h-screen">

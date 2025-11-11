@@ -26,12 +26,13 @@ const MovieDetail = () => {
 
   useEffect(() => {
     if (movie && movieId) {
-      trackPageView({
-        page: 'movie-detail',
-        movieId: movieId,
-        title: movie.title,
-        userId: isAuthenticated ? 'authenticated' : 'anonymous'
-      });
+      // Temporarily disable analytics to prevent freezing
+      // trackPageView({
+      //   page: 'movie-detail',
+      //   movieId: movieId,
+      //   title: movie.title,
+      //   userId: isAuthenticated ? 'authenticated' : 'anonymous'
+      // });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, isAuthenticated]); // Only track when id or auth status changes
