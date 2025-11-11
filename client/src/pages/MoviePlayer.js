@@ -103,8 +103,10 @@ const MoviePlayer = () => {
   };
 
   const handleSourcesLoaded = (sources) => {
+    console.log('📥 MoviePlayer: Received sources', sources.length, sources);
     setStreamingSources(sources);
     if (sources.length > 0) {
+      console.log('🎯 MoviePlayer: Setting selected source', sources[0]);
       setSelectedSource(sources[0]);
     }
   };

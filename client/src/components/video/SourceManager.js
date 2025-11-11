@@ -13,18 +13,30 @@ const SourceManager = ({ movieId, movieTitle, onSourcesLoaded, onSourceSelect })
   const [selectedSource, setSelectedSource] = useState(null);
   const [providerStatus, setProviderStatus] = useState({});
   const [retryCount, setRetryCount] = useState(0);
+  
+  // Use refs to avoid infinite loops
+  const onSourcesLoadedRef = React.useRef(onSourcesLoaded);
+  const onSourceSelectRef = React.useRef(onSourceSelect);
+  
+  React.useEffect(() => {
+    onSourcesLoadedRef.current = onSourcesLoaded;
+    onSourceSelectRef.current = onSourceSelect;
+  }, [onSourcesLoaded, onSourceSelect]);
 
   const loadSources = useCallback(async () => {
+    console.log('🔍 SourceManager: Loading sources for movie', movieId);
     setIsLoading(true);
     setError(null);
     
     try {
       const response = await fetch(`/api/streaming/sources/${movieId}`);
       const data = await response.json();
+      console.log('✅ SourceManager: Received data', data);
       
       if (data.success && data.sources) {
         // Enhanced Streaming Service returns sources directly
         const allSources = data.sources || [];
+        console.log('📺 SourceManager: Found', allSources.length, 'sources');
         
         // Sort by priority (already sorted by Enhanced Streaming Service)
         const sortedSources = allSources.length > 0 ? allSources : sortSourcesByQuality(allSources);
@@ -33,8 +45,9 @@ const SourceManager = ({ movieId, movieTitle, onSourcesLoaded, onSourceSelect })
         // Auto-select best source
         if (sortedSources.length > 0) {
           const bestSource = sortedSources[0];
+          console.log('🎯 SourceManager: Auto-selecting source', bestSource.provider, bestSource.url);
           setSelectedSource(bestSource);
-          onSourceSelect?.(bestSource);
+          onSourceSelectRef.current?.(bestSource);
         }
         
         // Update provider status from metadata
@@ -59,8 +72,9 @@ const SourceManager = ({ movieId, movieTitle, onSourcesLoaded, onSourceSelect })
           setProviderStatus(status);
         }
         
-        onSourcesLoaded?.(sortedSources);
-        toast.success(`Found ${sortedSources.length} streaming sources from ${data.metadata?.totalSources || sortedSources.length} providers`);
+        console.log('📤 SourceManager: Calling onSourcesLoaded with', sortedSources.length, 'sources');
+        onSourcesLoadedRef.current?.(sortedSources);
+        toast.success(`Found ${sortedSources.length} streaming sources`);
       } else {
         throw new Error(data.error || 'Failed to load sources');
       }
@@ -71,13 +85,14 @@ const SourceManager = ({ movieId, movieTitle, onSourcesLoaded, onSourceSelect })
     } finally {
       setIsLoading(false);
     }
-  }, [movieId, onSourceSelect, onSourcesLoaded]);
+  }, [movieId]); // Removed onSourceSelect and onSourcesLoaded from dependencies
 
   useEffect(() => {
     if (movieId) {
       loadSources();
     }
-  }, [movieId, loadSources]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [movieId]); // Only reload when movieId changes
 
   const sortSourcesByQuality = (sources) => {
     const qualityOrder = { '1080p': 4, '720p': 3, '480p': 2, '360p': 1 };
