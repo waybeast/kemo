@@ -22,22 +22,12 @@ const SourceManager = ({ movieId, movieTitle, onSourcesLoaded, onSourceSelect })
       const response = await fetch(`/api/streaming/sources/${movieId}`);
       const data = await response.json();
       
-      if (data.success && data.data) {
-        const allSources = [];
+      if (data.success && data.sources) {
+        // Enhanced Streaming Service returns sources directly
+        const allSources = data.sources || [];
         
-        // Combine all source types
-        if (data.data.sources?.embed?.data) {
-          allSources.push(...data.data.sources.embed.data);
-        }
-        if (data.data.sources?.direct?.data) {
-          allSources.push(...data.data.sources.direct.data);
-        }
-        if (data.data.sources?.hls?.data) {
-          allSources.push(...data.data.sources.hls.data);
-        }
-        
-        // Sort by quality and type
-        const sortedSources = sortSourcesByQuality(allSources);
+        // Sort by priority (already sorted by Enhanced Streaming Service)
+        const sortedSources = allSources.length > 0 ? allSources : sortSourcesByQuality(allSources);
         setSources(sortedSources);
         
         // Auto-select best source
@@ -47,11 +37,30 @@ const SourceManager = ({ movieId, movieTitle, onSourcesLoaded, onSourceSelect })
           onSourceSelect?.(bestSource);
         }
         
-        // Update provider status
-        updateProviderStatus(data.data.sources);
+        // Update provider status from metadata
+        if (data.metadata?.providerBreakdown) {
+          const status = {};
+          Object.entries(data.metadata.providerBreakdown).forEach(([provider, count]) => {
+            status[provider] = {
+              count,
+              qualities: new Set(),
+              types: new Set()
+            };
+          });
+          
+          // Fill in qualities and types from sources
+          sortedSources.forEach(source => {
+            if (status[source.provider]) {
+              status[source.provider].qualities.add(source.quality);
+              status[source.provider].types.add(source.type);
+            }
+          });
+          
+          setProviderStatus(status);
+        }
         
         onSourcesLoaded?.(sortedSources);
-        toast.success(`Found ${sortedSources.length} streaming sources`);
+        toast.success(`Found ${sortedSources.length} streaming sources from ${data.metadata?.totalSources || sortedSources.length} providers`);
       } else {
         throw new Error(data.error || 'Failed to load sources');
       }

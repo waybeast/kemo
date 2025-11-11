@@ -10,8 +10,7 @@ import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 const Search = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { movies, genres, years, setSearchQuery, setGenre, setYear, setSort, resetFilters } = useMovie();
-  const { trackPageView } = useMovie();
+  const { useSearchMovies, getGenres, getYears, trackPageView } = useMovie();
   const { isAuthenticated } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
@@ -20,23 +19,28 @@ const Search = () => {
   const [selectedSort, setSelectedSort] = useState(searchParams.get('sort') || 'createdAt');
   const [showFilters, setShowFilters] = useState(false);
 
-  const searchResults = movies?.data || [];
-  const pagination = movies?.pagination;
+  // Use the search hook
+  const query = searchParams.get('q') || '';
+  const { data: searchData, isLoading } = useSearchMovies(query);
+  
+  // Get genres and years
+  const genres = getGenres;
+  const years = getYears;
+
+  const searchResults = searchData?.data || [];
+  const pagination = searchData?.pagination;
 
   useEffect(() => {
     const query = searchParams.get('q');
     if (query) {
-      setSearchQuery(query);
-      // Only track page view once when component mounts or query changes
-      if (query !== searchTerm) {
-        trackPageView({
-          page: 'search',
-          query,
-          userId: isAuthenticated ? 'authenticated' : 'anonymous'
-        });
-      }
+      // Track page view when query changes
+      trackPageView({
+        page: 'search',
+        query,
+        userId: isAuthenticated ? 'authenticated' : 'anonymous'
+      });
     }
-  }, [searchParams.get('q'), setSearchQuery, trackPageView, isAuthenticated, searchTerm]);
+  }, [searchParams.get('q'), trackPageView, isAuthenticated]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -52,19 +56,16 @@ const Search = () => {
 
   const handleGenreChange = (genre) => {
     setSelectedGenre(genre);
-    setGenre(genre);
     updateSearchParams('genre', genre);
   };
 
   const handleYearChange = (year) => {
     setSelectedYear(year);
-    setYear(year);
     updateSearchParams('year', year);
   };
 
   const handleSortChange = (sort) => {
     setSelectedSort(sort);
-    setSort(sort, 'desc');
     updateSearchParams('sort', sort);
   };
 
@@ -82,7 +83,6 @@ const Search = () => {
     setSelectedGenre('');
     setSelectedYear('');
     setSelectedSort('createdAt');
-    resetFilters();
     setSearchParams({ q: searchTerm });
   };
 
@@ -251,14 +251,14 @@ const Search = () => {
           )}
 
           {/* Loading State */}
-          {movies.isLoading && (
+          {isLoading && (
             <div className="flex justify-center py-12">
               <LoadingSpinner size="lg" />
             </div>
           )}
 
           {/* Results Grid */}
-          {!movies.isLoading && searchResults.length > 0 && (
+          {!isLoading && searchResults.length > 0 && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -278,7 +278,7 @@ const Search = () => {
           )}
 
           {/* No Results */}
-          {!movies.isLoading && searchResults.length === 0 && searchParams.get('q') && (
+          {!isLoading && searchResults.length === 0 && searchParams.get('q') && (
             <div className="text-center py-12">
               <SearchIcon className="w-16 h-16 text-dark-600 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-white mb-2">No movies found</h3>

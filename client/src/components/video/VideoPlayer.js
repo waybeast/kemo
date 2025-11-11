@@ -9,6 +9,7 @@ import { toast } from 'react-hot-toast';
 const VideoPlayer = ({ 
   sources, 
   title, 
+  movieId,
   onProgress, 
   onError, 
   initialTime = 0,
@@ -18,7 +19,7 @@ const VideoPlayer = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(1);
-  const [currentTime, setCurrentTime] = useState(0);
+  const [currentTime, setCurrentTime] = useState(initialTime);
   const [duration, setDuration] = useState(0);
   const [showControls, setShowControls] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -26,10 +27,12 @@ const VideoPlayer = ({
   const [error, setError] = useState(null);
   const [showSourceSelector, setShowSourceSelector] = useState(false);
   const [playerType, setPlayerType] = useState('iframe');
+  const [lastProgressUpdate, setLastProgressUpdate] = useState(0);
   
   const videoRef = useRef(null);
   const containerRef = useRef(null);
   const controlsTimeoutRef = useRef(null);
+  const progressIntervalRef = useRef(null);
 
   // Auto-select first available source
   useEffect(() => {
@@ -60,6 +63,40 @@ const VideoPlayer = ({
       }
     };
   }, [showControls, isPlaying]);
+
+  // Progress tracking with 10-second intervals
+  useEffect(() => {
+    if (isPlaying && movieId && currentTime > 0 && duration > 0) {
+      // Start progress tracking interval
+      progressIntervalRef.current = setInterval(() => {
+        sendProgressUpdate();
+      }, 10000); // 10 seconds
+
+      return () => {
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
+        }
+      };
+    }
+  }, [isPlaying, movieId, currentTime, duration]);
+
+  // Send final progress update when component unmounts
+  useEffect(() => {
+    return () => {
+      if (movieId && currentTime > 0) {
+        sendProgressUpdate();
+      }
+    };
+  }, []);
+
+  // Resume from initial time
+  useEffect(() => {
+    if (videoRef.current && initialTime > 0 && duration > 0) {
+      videoRef.current.currentTime = initialTime;
+      setCurrentTime(initialTime);
+      toast.success(`Resuming from ${formatTime(initialTime)}`);
+    }
+  }, [initialTime, duration]);
 
   const selectBestSource = (sources) => {
     // Priority: direct > embed > iframe
@@ -121,16 +158,54 @@ const VideoPlayer = ({
     }
   };
 
+  const sendProgressUpdate = async () => {
+    if (!movieId || currentTime === 0 || duration === 0) return;
+
+    // Avoid sending duplicate updates
+    if (Math.abs(currentTime - lastProgressUpdate) < 5) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return; // Skip if not authenticated
+
+      const progressPercent = (currentTime / duration) * 100;
+
+      const response = await fetch(`/api/streaming/progress/${movieId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          currentTime,
+          duration,
+          progress: progressPercent
+        })
+      });
+
+      if (response.ok) {
+        setLastProgressUpdate(currentTime);
+        console.log(`Progress updated: ${Math.floor(progressPercent)}%`);
+      }
+    } catch (error) {
+      console.error('Failed to update progress:', error);
+      // Don't show error toast to avoid interrupting playback
+    }
+  };
+
   const handleTimeUpdate = () => {
     if (videoRef.current) {
-      setCurrentTime(videoRef.current.currentTime);
-      setDuration(videoRef.current.duration);
+      const newTime = videoRef.current.currentTime;
+      const newDuration = videoRef.current.duration;
+      
+      setCurrentTime(newTime);
+      setDuration(newDuration);
       
       if (onProgress) {
         onProgress({
-          currentTime: videoRef.current.currentTime,
-          duration: videoRef.current.duration,
-          progress: (videoRef.current.currentTime / videoRef.current.duration) * 100
+          currentTime: newTime,
+          duration: newDuration,
+          progress: (newTime / newDuration) * 100
         });
       }
     }
