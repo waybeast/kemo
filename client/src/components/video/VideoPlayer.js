@@ -604,9 +604,9 @@ const VideoPlayer = ({
       {/* Source Selector */}
       {renderSourceSelector()}
 
-      {/* Top Controls */}
+      {/* Top Controls - Only show for non-iframe players */}
       <AnimatePresence>
-        {showControls && (
+        {showControls && playerType !== 'iframe' && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
