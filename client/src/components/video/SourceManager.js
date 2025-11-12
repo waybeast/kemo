@@ -75,7 +75,12 @@ const SourceManager = ({ movieId, movieTitle, onSourcesLoaded, onSourceSelect })
         
         console.log('📤 SourceManager: Calling onSourcesLoaded with', sortedSources.length, 'sources');
         onSourcesLoadedRef.current?.(sortedSources);
-        toast.success(`Found ${sortedSources.length} streaming sources`);
+        
+        if (sortedSources.length > 0) {
+          toast.success(`Ready to stream`);
+        } else {
+          toast.error('No streaming sources available for this movie');
+        }
       } else {
         throw new Error(data.error || 'Failed to load sources');
       }

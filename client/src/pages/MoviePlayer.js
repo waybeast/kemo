@@ -26,6 +26,9 @@ const MoviePlayer = () => {
   const [selectedSource, setSelectedSource] = useState(null);
   const [watchProgress, setWatchProgress] = useState(null);
   const [showSourceManager, setShowSourceManager] = useState(false); // Hidden by default - auto-play VidKing
+  const [sourcesLoading, setSourcesLoading] = useState(true);
+  const [sourcesError, setSourcesError] = useState(false);
+  const [videoPlaybackStarted, setVideoPlaybackStarted] = useState(false);
 
   const loadMovie = useCallback(async () => {
     try {
@@ -75,6 +78,32 @@ const MoviePlayer = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]); // Only reload when movie ID changes
 
+  // Listen for VidKing playback events to detect if video actually plays
+  useEffect(() => {
+    const handleMessage = (event) => {
+      if (!event.origin.includes('vidking.net')) return;
+      
+      try {
+        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        
+        if (data.type === 'PLAYER_EVENT' && data.data) {
+          const { event: eventType } = data.data;
+          
+          // Detect if video actually started playing
+          if (eventType === 'play' || eventType === 'timeupdate') {
+            setVideoPlaybackStarted(true);
+            setSourcesError(false);
+          }
+        }
+      } catch (error) {
+        // Ignore parsing errors
+      }
+    };
+    
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
   const handleProgressUpdate = async (progress) => {
     if (!isAuthenticated) return;
     
@@ -97,12 +126,18 @@ const MoviePlayer = () => {
 
   const handleSourcesLoaded = (sources) => {
     console.log('📥 MoviePlayer: Received sources', sources.length, sources);
+    setSourcesLoading(false);
     setStreamingSources(sources);
+    
     if (sources.length > 0) {
       console.log('🎯 MoviePlayer: Auto-playing first source', sources[0]);
       setSelectedSource(sources[0]);
+      setSourcesError(false);
       // Auto-hide source manager since we're auto-playing
       setShowSourceManager(false);
+    } else {
+      // No sources available
+      setSourcesError(true);
     }
   };
 
@@ -244,13 +279,55 @@ const MoviePlayer = () => {
             initialTime={watchProgress?.lastPosition || 0}
             onSourceChange={setSelectedSource}
           />
+        ) : sourcesError ? (
+          <div className="w-full h-full bg-gradient-to-b from-gray-900 to-black flex items-center justify-center p-8">
+            <div className="text-center text-white max-w-md">
+              <div className="text-6xl mb-6">😔</div>
+              <h1 className="text-3xl font-bold mb-4">{movie.title}</h1>
+              <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-6 mb-6">
+                <h2 className="text-xl font-semibold mb-2 text-red-400">Not Available for Streaming</h2>
+                <p className="text-gray-300 mb-4">
+                  This movie is not currently available on our streaming providers. 
+                  We're constantly adding new content!
+                </p>
+              </div>
+              
+              <div className="space-y-3">
+                <button
+                  onClick={() => navigate('/browse')}
+                  className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
+                >
+                  Browse Available Movies
+                </button>
+                <button
+                  onClick={() => navigate(-1)}
+                  className="w-full px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold transition-colors"
+                >
+                  Go Back
+                </button>
+              </div>
+              
+              <p className="text-gray-500 text-sm mt-6">
+                Tip: Try popular movies like The Godfather, Inception, or The Dark Knight
+              </p>
+            </div>
+          </div>
+        ) : sourcesLoading ? (
+          <div className="w-full h-full bg-gradient-to-b from-gray-900 to-black flex items-center justify-center">
+            <div className="text-center text-white">
+              <div className="text-6xl mb-4">🎬</div>
+              <h1 className="text-2xl font-bold mb-2">{movie.title}</h1>
+              <p className="text-gray-400 mb-4">Finding streaming sources...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+              <p className="text-gray-500 text-sm mt-4">This may take a few seconds</p>
+            </div>
+          </div>
         ) : (
           <div className="w-full h-full bg-gradient-to-b from-gray-900 to-black flex items-center justify-center">
             <div className="text-center text-white">
               <div className="text-6xl mb-4">🎬</div>
               <h1 className="text-2xl font-bold mb-2">{movie.title}</h1>
-              <p className="text-gray-400 mb-4">Loading streaming source...</p>
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+              <p className="text-gray-400 mb-4">Preparing video player...</p>
             </div>
           </div>
         )}
