@@ -48,7 +48,7 @@ const MoviePlayer = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [id, isAuthenticated, getMovieById]);
+  }, [id, isAuthenticated]); // Removed getMovieById to prevent infinite loop
 
   const loadWatchProgress = async () => {
     try {
@@ -72,15 +72,17 @@ const MoviePlayer = () => {
   };
 
   useEffect(() => {
-    if (isAuthenticated) {
-      trackPageView({
-        page: 'movie-player',
-        movieId: id,
-        userId: 'authenticated'
-      });
-    }
+    // Disable analytics to prevent infinite loops
+    // if (isAuthenticated) {
+    //   trackPageView({
+    //     page: 'movie-player',
+    //     movieId: id,
+    //     userId: 'authenticated'
+    //   });
+    // }
     loadMovie();
-  }, [id, isAuthenticated, loadMovie]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]); // Only reload when movie ID changes
 
   const handleProgressUpdate = async (progress) => {
     if (!isAuthenticated) return;

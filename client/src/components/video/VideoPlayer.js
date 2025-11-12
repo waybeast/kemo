@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Play, Pause, Volume2, VolumeX, Maximize, Minimize, 
@@ -33,13 +33,26 @@ const VideoPlayer = ({
   const containerRef = useRef(null);
   const controlsTimeoutRef = useRef(null);
   const progressIntervalRef = useRef(null);
+  const currentTimeRef = useRef(currentTime);
+  const durationRef = useRef(duration);
+  
+  // Keep refs in sync
+  useEffect(() => {
+    currentTimeRef.current = currentTime;
+    durationRef.current = duration;
+  }, [currentTime, duration]);
 
   // Auto-select first available source
   useEffect(() => {
     if (sources && sources.length > 0 && !currentSource) {
       const bestSource = selectBestSource(sources);
       setCurrentSource(bestSource);
-      setPlayerType(determinePlayerType(bestSource.url));
+      const type = determinePlayerType(bestSource.url);
+      setPlayerType(type);
+      // For iframes, set loading to false immediately since we can't track their load state
+      if (type === 'iframe') {
+        setIsLoading(false);
+      }
     }
   }, [sources, currentSource]);
 
@@ -66,28 +79,52 @@ const VideoPlayer = ({
 
   // Progress tracking with 10-second intervals
   useEffect(() => {
+    // Clear any existing interval
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+
     if (isPlaying && movieId && currentTime > 0 && duration > 0) {
       // Start progress tracking interval
       progressIntervalRef.current = setInterval(() => {
         sendProgressUpdate();
       }, 10000); // 10 seconds
-
-      return () => {
-        if (progressIntervalRef.current) {
-          clearInterval(progressIntervalRef.current);
-        }
-      };
     }
-  }, [isPlaying, movieId, currentTime, duration]);
+
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPlaying, movieId]); // Removed currentTime and duration to prevent constant re-creation
 
   // Send final progress update when component unmounts
   useEffect(() => {
     return () => {
-      if (movieId && currentTime > 0) {
-        sendProgressUpdate();
+      if (movieId && currentTime > 0 && duration > 0) {
+        // Send final update on unmount
+        const token = localStorage.getItem('token');
+        if (token) {
+          fetch(`/api/streaming/progress/${movieId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              currentTime,
+              duration,
+              progress: (currentTime / duration) * 100
+            })
+          }).catch(err => console.error('Failed to send final progress:', err));
+        }
       }
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - only run on unmount
 
   // Resume from initial time
   useEffect(() => {
@@ -158,17 +195,20 @@ const VideoPlayer = ({
     }
   };
 
-  const sendProgressUpdate = async () => {
-    if (!movieId || currentTime === 0 || duration === 0) return;
+  const sendProgressUpdate = useCallback(async () => {
+    const time = currentTimeRef.current;
+    const dur = durationRef.current;
+    
+    if (!movieId || time === 0 || dur === 0) return;
 
     // Avoid sending duplicate updates
-    if (Math.abs(currentTime - lastProgressUpdate) < 5) return;
+    if (Math.abs(time - lastProgressUpdate) < 5) return;
 
     try {
       const token = localStorage.getItem('token');
       if (!token) return; // Skip if not authenticated
 
-      const progressPercent = (currentTime / duration) * 100;
+      const progressPercent = (time / dur) * 100;
 
       const response = await fetch(`/api/streaming/progress/${movieId}`, {
         method: 'POST',
@@ -177,21 +217,21 @@ const VideoPlayer = ({
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          currentTime,
-          duration,
+          currentTime: time,
+          duration: dur,
           progress: progressPercent
         })
       });
 
       if (response.ok) {
-        setLastProgressUpdate(currentTime);
+        setLastProgressUpdate(time);
         console.log(`Progress updated: ${Math.floor(progressPercent)}%`);
       }
     } catch (error) {
       console.error('Failed to update progress:', error);
       // Don't show error toast to avoid interrupting playback
     }
-  };
+  }, [movieId, lastProgressUpdate]);
 
   const handleTimeUpdate = () => {
     if (videoRef.current) {

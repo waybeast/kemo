@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useMovie } from '../../contexts/MovieContext';
-import { Search, Menu, X, User, LogOut, Heart, Settings } from 'lucide-react';
+import { Search, Menu, X, User, LogOut, Heart, Settings, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Navbar = () => {
@@ -130,6 +130,14 @@ const Navbar = () => {
                       >
                         <Heart className="w-4 h-4 mr-3" />
                         Watchlist
+                      </Link>
+                      <Link
+                        to="/history"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="flex items-center px-4 py-2 text-dark-300 hover:text-white hover:bg-dark-700 transition-colors"
+                      >
+                        <Clock className="w-4 h-4 mr-3" />
+                        Watch History
                       </Link>
                       <Link
                         to="/settings"

@@ -13,6 +13,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
 import Watchlist from './pages/Watchlist';
+import WatchHistory from './pages/WatchHistory';
 import MoviePlayer from './pages/MoviePlayer';
 import NotFound from './pages/NotFound';
 import './index.css';
@@ -47,6 +48,7 @@ function App() {
                   <Route path="/register" element={<Register />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/watchlist" element={<Watchlist />} />
+                  <Route path="/history" element={<WatchHistory />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>
