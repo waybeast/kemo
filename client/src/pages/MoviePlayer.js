@@ -52,7 +52,8 @@ const MoviePlayer = () => {
 
   const loadWatchProgress = async () => {
     try {
-      const response = await fetch(`/api/streaming/progress/${id}`, {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/api/streaming/progress/${id}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }

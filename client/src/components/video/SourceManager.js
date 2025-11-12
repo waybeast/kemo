@@ -29,7 +29,8 @@ const SourceManager = ({ movieId, movieTitle, onSourcesLoaded, onSourceSelect })
     setError(null);
     
     try {
-      const response = await fetch(`/api/streaming/sources/${movieId}`);
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/api/streaming/sources/${movieId}`);
       const data = await response.json();
       console.log('✅ SourceManager: Received data', data);
       
