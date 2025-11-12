@@ -73,9 +73,10 @@ class VidKingService {
    * @param {string} type - 'movie' or 'tv'
    * @param {number} season - Season number (for TV)
    * @param {number} episode - Episode number (for TV)
+   * @param {Object} options - Additional options (color, progress)
    * @returns {string} Embed URL
    */
-  buildEmbedUrl(tmdbId, type = 'movie', season = null, episode = null) {
+  buildEmbedUrl(tmdbId, type = 'movie', season = null, episode = null, options = {}) {
     let baseUrl;
     if (type === 'tv' && season !== null && episode !== null) {
       baseUrl = `${this.embedBaseUrl}/tv/${tmdbId}/${season}/${episode}`;
@@ -87,8 +88,14 @@ class VidKingService {
     const params = new URLSearchParams({
       autoPlay: 'true',
       nextEpisode: 'true',
-      episodeSelector: 'true'
+      episodeSelector: 'true',
+      color: options.color || 'e50914' // Netflix red as default brand color
     });
+    
+    // Add progress parameter if provided (resume playback)
+    if (options.progress && options.progress > 0) {
+      params.set('progress', Math.floor(options.progress));
+    }
     
     return `${baseUrl}?${params.toString()}`;
   }

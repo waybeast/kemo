@@ -128,6 +128,50 @@ const VideoPlayer = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty deps - only run on unmount
 
+  // Listen for VidKing player progress events (postMessage)
+  useEffect(() => {
+    const handleVidKingMessage = (event) => {
+      // Only accept messages from VidKing
+      if (!event.origin.includes('vidking.net')) return;
+      
+      try {
+        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        
+        // Handle VidKing player events
+        if (data.type === 'PLAYER_EVENT' && data.data) {
+          const { event: eventType, currentTime: time, duration: dur, progress } = data.data;
+          
+          console.log('📺 VidKing Event:', eventType, { time, dur, progress });
+          
+          // Update local state
+          if (time !== undefined) setCurrentTime(time);
+          if (dur !== undefined) setDuration(dur);
+          
+          // Track play/pause state
+          if (eventType === 'play') setIsPlaying(true);
+          if (eventType === 'pause' || eventType === 'ended') setIsPlaying(false);
+          
+          // Send progress to backend
+          if (onProgress && time > 0 && dur > 0) {
+            onProgress({
+              currentTime: time,
+              duration: dur,
+              progress: (time / dur) * 100
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing VidKing message:', error);
+      }
+    };
+    
+    window.addEventListener('message', handleVidKingMessage);
+    
+    return () => {
+      window.removeEventListener('message', handleVidKingMessage);
+    };
+  }, [movieId, onProgress]);
+
   // Resume from initial time
   useEffect(() => {
     if (videoRef.current && initialTime > 0 && duration > 0) {
