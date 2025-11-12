@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
-import axios from 'axios';
+import api from '../utils/api';
 import toast from 'react-hot-toast';
 
 const AuthContext = createContext();
@@ -60,9 +60,9 @@ export const AuthProvider = ({ children }) => {
   // Set up axios defaults
   useEffect(() => {
     if (state.token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${state.token}`;
+      api.defaults.headers.common['Authorization'] = `Bearer ${state.token}`;
     } else {
-      delete axios.defaults.headers.common['Authorization'];
+      delete api.defaults.headers.common['Authorization'];
     }
   }, [state.token]);
 
@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }) => {
     ['verifyToken'],
     async () => {
       if (!state.token) throw new Error('No token');
-      const response = await axios.get('/api/auth/verify');
+      const response = await api.get('/api/auth/verify');
       return response.data.data.user;
     },
     {
@@ -90,7 +90,7 @@ export const AuthProvider = ({ children }) => {
   // Login mutation
   const loginMutation = useMutation(
     async ({ username, password, rememberMe }) => {
-      const response = await axios.post('/api/auth/login', { username, password, rememberMe });
+      const response = await api.post('/api/auth/login', { username, password, rememberMe });
       return response.data.data;
     },
     {
@@ -108,7 +108,7 @@ export const AuthProvider = ({ children }) => {
   // Register mutation
   const registerMutation = useMutation(
     async ({ username, email, password }) => {
-      const response = await axios.post('/api/auth/register', { username, email, password });
+      const response = await api.post('/api/auth/register', { username, email, password });
       return response.data.data;
     },
     {
@@ -127,7 +127,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       if (state.token) {
-        await axios.post('/api/auth/logout');
+        await api.post('/api/auth/logout');
       }
     } catch (error) {
       console.error('Logout error:', error);
@@ -142,7 +142,7 @@ export const AuthProvider = ({ children }) => {
   // Update profile mutation
   const updateProfileMutation = useMutation(
     async (profileData) => {
-      const response = await axios.put('/api/auth/profile', profileData);
+      const response = await api.put('/api/auth/profile', profileData);
       return response.data.data;
     },
     {
@@ -160,7 +160,7 @@ export const AuthProvider = ({ children }) => {
   // Change password mutation
   const changePasswordMutation = useMutation(
     async (passwordData) => {
-      const response = await axios.put('/api/auth/change-password', passwordData);
+      const response = await api.put('/api/auth/change-password', passwordData);
       return response.data;
     },
     {
@@ -177,7 +177,7 @@ export const AuthProvider = ({ children }) => {
   // Watchlist mutations
   const addToWatchlistMutation = useMutation(
     async (movieId) => {
-      const response = await axios.post(`/api/auth/watchlist/${movieId}`);
+      const response = await api.post(`/api/auth/watchlist/${movieId}`);
       return response.data;
     },
     {
@@ -194,7 +194,7 @@ export const AuthProvider = ({ children }) => {
 
   const removeFromWatchlistMutation = useMutation(
     async (movieId) => {
-      const response = await axios.delete(`/api/auth/watchlist/${movieId}`);
+      const response = await api.delete(`/api/auth/watchlist/${movieId}`);
       return response.data;
     },
     {
@@ -212,7 +212,7 @@ export const AuthProvider = ({ children }) => {
   // Add to history mutation
   const addToHistoryMutation = useMutation(
     async ({ movieId, progress }) => {
-      const response = await axios.post(`/api/auth/history/${movieId}`, { progress });
+      const response = await api.post(`/api/auth/history/${movieId}`, { progress });
       return response.data;
     },
     {

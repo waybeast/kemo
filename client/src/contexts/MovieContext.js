@@ -1,6 +1,6 @@
 import React, { createContext, useContext } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
-import axios from 'axios';
+import api from '../utils/api';
 
 const MovieContext = createContext();
 
@@ -20,7 +20,7 @@ export const MovieProvider = ({ children }) => {
     return useQuery(
       ['movies', 'category', category, limit],
       async () => {
-        const response = await axios.get(`/api/movies/category/${category}?limit=${limit}`);
+        const response = await api.get(`/api/movies/category/${category}?limit=${limit}`);
         return response.data;
       },
       {
@@ -38,7 +38,7 @@ export const MovieProvider = ({ children }) => {
     return useQuery(
       ['movie', id],
       async () => {
-        const response = await axios.get(`/api/movies/${id}`);
+        const response = await api.get(`/api/movies/${id}`);
         return response.data;
       },
       {
@@ -57,7 +57,7 @@ export const MovieProvider = ({ children }) => {
       ['streaming', movieId, quality],
       async () => {
         const params = quality ? `?quality=${quality}` : '';
-        const response = await axios.get(`/api/movies/${movieId}/stream${params}`);
+        const response = await api.get(`/api/movies/${movieId}/stream${params}`);
         return response.data;
       },
       {
@@ -75,7 +75,7 @@ export const MovieProvider = ({ children }) => {
     return useQuery(
       ['search', query, limit],
       async () => {
-        const response = await axios.get(`/api/movies/search?q=${encodeURIComponent(query)}&limit=${limit}`);
+        const response = await api.get(`/api/movies/search?q=${encodeURIComponent(query)}&limit=${limit}`);
         return response.data;
       },
       {
@@ -91,7 +91,7 @@ export const MovieProvider = ({ children }) => {
   // Regular async functions for direct calls (not hooks)
   const getMoviesByCategory = async (category, limit = 20) => {
     try {
-      const response = await axios.get(`/api/movies/category/${category}?limit=${limit}`);
+      const response = await api.get(`/api/movies/category/${category}?limit=${limit}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching movies by category:', error);
@@ -101,7 +101,7 @@ export const MovieProvider = ({ children }) => {
 
   const getMovieById = async (id) => {
     try {
-      const response = await axios.get(`/api/movies/${id}`);
+      const response = await api.get(`/api/movies/${id}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching movie by ID:', error);
@@ -112,7 +112,7 @@ export const MovieProvider = ({ children }) => {
   const getStreamingUrls = async (movieId, quality) => {
     try {
       const params = quality ? `?quality=${quality}` : '';
-      const response = await axios.get(`/api/movies/${movieId}/stream${params}`);
+      const response = await api.get(`/api/movies/${movieId}/stream${params}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching streaming URLs:', error);
@@ -122,7 +122,7 @@ export const MovieProvider = ({ children }) => {
 
   const searchMovies = async (query, limit = 20) => {
     try {
-      const response = await axios.get(`/api/movies/search?q=${encodeURIComponent(query)}&limit=${limit}`);
+      const response = await api.get(`/api/movies/search?q=${encodeURIComponent(query)}&limit=${limit}`);
       return response.data;
     } catch (error) {
       console.error('Error searching movies:', error);
@@ -134,7 +134,7 @@ export const MovieProvider = ({ children }) => {
   const getGenres = useQuery(
     ['genres'],
     async () => {
-      const response = await axios.get('/api/movies/genres/list');
+      const response = await api.get('/api/movies/genres/list');
       return response.data;
     },
     {
@@ -149,7 +149,7 @@ export const MovieProvider = ({ children }) => {
   const getYears = useQuery(
     ['years'],
     async () => {
-      const response = await axios.get('/api/movies/years/list');
+      const response = await api.get('/api/movies/years/list');
       return response.data;
     },
     {
@@ -163,7 +163,7 @@ export const MovieProvider = ({ children }) => {
   // Track page view
   const trackPageView = useMutation(
     async (data) => {
-      const response = await axios.post('/api/analytics/track', data);
+      const response = await api.post('/api/analytics/track', data);
       return response.data;
     },
     {
@@ -179,7 +179,7 @@ export const MovieProvider = ({ children }) => {
   const getAnalyticsStats = useQuery(
     ['analytics', 'stats'],
     async () => {
-      const response = await axios.get('/api/analytics/stats');
+      const response = await api.get('/api/analytics/stats');
       return response.data;
     },
     {
@@ -194,7 +194,7 @@ export const MovieProvider = ({ children }) => {
   const getAllMovies = useQuery(
     ['movies', 'all'],
     async () => {
-      const response = await axios.get('/api/movies?page=1&limit=20&sort=createdAt&order=desc');
+      const response = await api.get('/api/movies?page=1&limit=20&sort=createdAt&order=desc');
       return response.data;
     },
     {
