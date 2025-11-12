@@ -5,8 +5,7 @@ import {
   Settings, CheckCircle, AlertCircle, Loader2
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+import { getApiUrl } from '../../utils/api';
 
 const VideoPlayer = ({ 
   sources, 
@@ -110,7 +109,7 @@ const VideoPlayer = ({
         // Send final update on unmount
         const token = localStorage.getItem('token');
         if (token) {
-          fetch(`${API_URL}/api/streaming/progress/${movieId}`, {
+          fetch(getApiUrl(`/api/streaming/progress/${movieId}`), {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -256,7 +255,7 @@ const VideoPlayer = ({
 
       const progressPercent = (time / dur) * 100;
 
-      const response = await fetch(`${API_URL}/api/streaming/progress/${movieId}`, {
+      const response = await fetch(getApiUrl(`/api/streaming/progress/${movieId}`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

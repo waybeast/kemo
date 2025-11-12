@@ -5,6 +5,7 @@ import {
   Wifi, WifiOff, Globe, Shield, Zap
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { getApiUrl } from '../../utils/api';
 
 const SourceManager = ({ movieId, movieTitle, onSourcesLoaded, onSourceSelect }) => {
   const [sources, setSources] = useState([]);
@@ -29,8 +30,7 @@ const SourceManager = ({ movieId, movieTitle, onSourcesLoaded, onSourceSelect })
     setError(null);
     
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/api/streaming/sources/${movieId}`);
+      const response = await fetch(getApiUrl(`/api/streaming/sources/${movieId}`));
       const data = await response.json();
       console.log('✅ SourceManager: Received data', data);
       
