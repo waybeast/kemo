@@ -430,8 +430,6 @@ const VideoPlayer = ({
             frameBorder="0"
             allowFullScreen
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-            sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-presentation allow-top-navigation-by-user-activation"
-            referrerPolicy="origin"
             title={title}
             onLoad={handleCanPlay}
             onError={handleError}
