@@ -11,6 +11,7 @@ import VideoPlayer from '../components/video/VideoPlayer';
 import SourceManager from '../components/video/SourceManager';
 import { toast } from 'react-hot-toast';
 import { AnimatePresence } from 'framer-motion';
+import { getApiUrl } from '../utils/api';
 
 const MoviePlayer = () => {
   const { id } = useParams();
@@ -51,8 +52,7 @@ const MoviePlayer = () => {
 
   const loadWatchProgress = async () => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/api/streaming/progress/${id}`, {
+      const response = await fetch(getApiUrl(`/api/streaming/progress/${id}`), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
