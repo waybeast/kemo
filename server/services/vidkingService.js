@@ -76,10 +76,21 @@ class VidKingService {
    * @returns {string} Embed URL
    */
   buildEmbedUrl(tmdbId, type = 'movie', season = null, episode = null) {
+    let baseUrl;
     if (type === 'tv' && season !== null && episode !== null) {
-      return `${this.embedBaseUrl}/tv/${tmdbId}/${season}/${episode}`;
+      baseUrl = `${this.embedBaseUrl}/tv/${tmdbId}/${season}/${episode}`;
+    } else {
+      baseUrl = `${this.embedBaseUrl}/${type}/${tmdbId}`;
     }
-    return `${this.embedBaseUrl}/${type}/${tmdbId}`;
+    
+    // Add query parameters for better playback
+    const params = new URLSearchParams({
+      autoPlay: 'true',
+      nextEpisode: 'true',
+      episodeSelector: 'true'
+    });
+    
+    return `${baseUrl}?${params.toString()}`;
   }
 
   /**
