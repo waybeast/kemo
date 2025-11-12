@@ -2,8 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
-  Heart, Share2, Download, ArrowLeft, Clock, Star, Calendar,
-  RotateCcw, Settings, Play
+  Heart, Share2, Download, ArrowLeft, Settings
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useMovie } from '../contexts/MovieContext';
@@ -26,7 +25,7 @@ const MoviePlayer = () => {
   const [streamingSources, setStreamingSources] = useState([]);
   const [selectedSource, setSelectedSource] = useState(null);
   const [watchProgress, setWatchProgress] = useState(null);
-  const [showSourceManager, setShowSourceManager] = useState(true); // Auto-show source manager
+  const [showSourceManager, setShowSourceManager] = useState(false); // Hidden by default - auto-play VidKing
 
   const loadMovie = useCallback(async () => {
     try {
@@ -109,8 +108,10 @@ const MoviePlayer = () => {
     console.log('📥 MoviePlayer: Received sources', sources.length, sources);
     setStreamingSources(sources);
     if (sources.length > 0) {
-      console.log('🎯 MoviePlayer: Setting selected source', sources[0]);
+      console.log('🎯 MoviePlayer: Auto-playing first source', sources[0]);
       setSelectedSource(sources[0]);
+      // Auto-hide source manager since we're auto-playing
+      setShowSourceManager(false);
     }
   };
 
@@ -183,14 +184,17 @@ const MoviePlayer = () => {
           </button>
           
           <div className="flex items-center space-x-4">
-            <button
-              onClick={() => setShowSourceManager(!showSourceManager)}
-              className="flex items-center space-x-2 text-white hover:text-blue-400 transition-colors"
-              title="Change Source"
-            >
-              <Settings size={20} />
-              <span className="hidden md:inline">Sources</span>
-            </button>
+            {/* Only show Sources button when multiple sources are available */}
+            {streamingSources.length > 1 && (
+              <button
+                onClick={() => setShowSourceManager(!showSourceManager)}
+                className="flex items-center space-x-2 text-white hover:text-blue-400 transition-colors"
+                title="Change Source"
+              >
+                <Settings size={20} />
+                <span className="hidden md:inline">Sources</span>
+              </button>
+            )}
             
             <button
               onClick={handleWatchlistToggle}
@@ -226,152 +230,83 @@ const MoviePlayer = () => {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex h-screen">
-        {/* Video Player Section */}
-        <div className="flex-1 relative">
-          {selectedSource ? (
-            <VideoPlayer
-              sources={streamingSources}
-              title={movie.title}
-              movieId={id}
-              onProgress={handleProgressUpdate}
-              onError={handleError}
-              initialTime={watchProgress?.lastPosition || 0}
-              onSourceChange={setSelectedSource}
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-b from-gray-900 to-black flex items-center justify-center">
-              <div className="text-center text-white">
-                <div className="text-6xl mb-4">🎬</div>
-                <h1 className="text-2xl font-bold mb-2">{movie.title}</h1>
-                <p className="text-gray-400 mb-4">Select a streaming source to start watching</p>
-                
-                <button
-                  onClick={() => setShowSourceManager(true)}
-                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center space-x-2 mx-auto"
-                >
-                  <Play size={20} />
-                  <span>Choose Source</span>
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+      {/* Hidden SourceManager - loads sources in background */}
+      <div style={{ display: 'none' }}>
+        <SourceManager
+          movieId={id}
+          movieTitle={movie.title}
+          onSourcesLoaded={handleSourcesLoaded}
+          onSourceSelect={handleSourceSelect}
+        />
+      </div>
 
-        {/* Source Manager Sidebar */}
+      {/* Main Content */}
+      <div className="h-screen">
+        {/* Video Player Section - Full Screen */}
+        {selectedSource ? (
+          <VideoPlayer
+            sources={streamingSources}
+            title={movie.title}
+            movieId={id}
+            onProgress={handleProgressUpdate}
+            onError={handleError}
+            initialTime={watchProgress?.lastPosition || 0}
+            onSourceChange={setSelectedSource}
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-b from-gray-900 to-black flex items-center justify-center">
+            <div className="text-center text-white">
+              <div className="text-6xl mb-4">🎬</div>
+              <h1 className="text-2xl font-bold mb-2">{movie.title}</h1>
+              <p className="text-gray-400 mb-4">Loading streaming source...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+            </div>
+          </div>
+        )}
+
+        {/* Source Manager Sidebar - Only show when multiple sources available */}
         <AnimatePresence>
-          {showSourceManager && (
+          {showSourceManager && streamingSources.length > 1 && (
             <motion.div
               initial={{ width: 0, opacity: 0 }}
               animate={{ width: 400, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
-              className="bg-gray-950 border-l border-gray-800 overflow-hidden"
+              className="fixed right-0 top-0 h-screen bg-gray-950 border-l border-gray-800 overflow-hidden z-50"
             >
               <div className="p-4 h-full overflow-y-auto">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-white font-semibold text-lg">Streaming Sources</h2>
                   <button
                     onClick={() => setShowSourceManager(false)}
-                    className="text-gray-400 hover:text-white"
+                    className="text-gray-400 hover:text-white text-2xl"
                   >
                     ×
                   </button>
                 </div>
                 
-                <SourceManager
-                  movieId={id}
-                  movieTitle={movie.title}
-                  onSourcesLoaded={handleSourcesLoaded}
-                  onSourceSelect={handleSourceSelect}
-                />
+                <div className="space-y-2">
+                  {streamingSources.map((source, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleSourceSelect(source)}
+                      className={`w-full text-left p-3 rounded-lg transition-colors ${
+                        selectedSource?.url === source.url
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                      }`}
+                    >
+                      <div className="font-medium capitalize">{source.provider}</div>
+                      <div className="text-sm opacity-75">
+                        {source.quality} • {source.type}
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
-
-      {/* Movie Info Overlay - Hide when source manager is open or when video is selected */}
-      <AnimatePresence>
-        {!showSourceManager && !selectedSource && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="absolute bottom-4 left-4 right-4 z-40"
-          >
-            <div className="bg-black/80 backdrop-blur-sm rounded-lg p-4">
-              <div className="flex items-start space-x-4">
-                {/* Movie Poster */}
-                <img
-                  src={movie.posterPath ? `https://image.tmdb.org/t/p/w200${movie.posterPath}` : '/placeholder-movie.jpg'}
-                  alt={movie.title}
-                  className="w-16 h-24 object-cover rounded-lg"
-                  onError={(e) => {
-                    e.target.src = '/placeholder-movie.jpg';
-                  }}
-                />
-                
-                {/* Movie Info */}
-                <div className="flex-1">
-                  <h1 className="text-white font-bold text-xl mb-1">{movie.title}</h1>
-                  <div className="flex items-center space-x-4 text-gray-300 text-sm mb-2">
-                    <span className="flex items-center space-x-1">
-                      <Star className="w-4 h-4 text-yellow-500" />
-                      <span>{movie.voteAverage?.toFixed(1) || 'N/A'}</span>
-                    </span>
-                    <span className="flex items-center space-x-1">
-                      <Calendar className="w-4 h-4" />
-                      <span>{movie.releaseDate?.split('-')[0] || 'N/A'}</span>
-                    </span>
-                    <span className="flex items-center space-x-1">
-                      <Clock className="w-4 h-4" />
-                      <span>{movie.runtime || 'N/A'} min</span>
-                    </span>
-                  </div>
-                  
-                  <p className="text-gray-400 text-sm line-clamp-2">
-                    {movie.overview || 'No description available.'}
-                  </p>
-                  
-                  {/* Watch Progress */}
-                  {watchProgress && (
-                    <div className="mt-2">
-                      <div className="flex items-center space-x-2 text-blue-400 text-sm">
-                        <RotateCcw className="w-4 h-4" />
-                        <span>Resume from {Math.floor(watchProgress.lastPosition / 60)}:{(watchProgress.lastPosition % 60).toString().padStart(2, '0')}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Action Buttons */}
-                <div className="flex flex-col space-y-2">
-                  <button
-                    onClick={() => setShowSourceManager(true)}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm flex items-center space-x-2"
-                  >
-                    <Settings size={16} />
-                    <span>Sources</span>
-                  </button>
-                  
-                  <button
-                    onClick={handleWatchlistToggle}
-                    className={`px-4 py-2 rounded-lg text-sm flex items-center space-x-2 ${
-                      isInWatchlist 
-                        ? 'bg-red-600 hover:bg-red-700 text-white' 
-                        : 'bg-gray-700 hover:bg-gray-600 text-white'
-                    }`}
-                  >
-                    <Heart size={16} fill={isInWatchlist ? 'currentColor' : 'none'} />
-                    <span>{isInWatchlist ? 'Remove' : 'Add'}</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Related Movies */}
       {relatedMovies.length > 0 && (
