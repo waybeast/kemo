@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Heart, Share2, Download, ArrowLeft, Settings
 } from 'lucide-react';
@@ -10,14 +10,13 @@ import MovieCard from '../components/movies/MovieCard';
 import VideoPlayer from '../components/video/VideoPlayer';
 import SourceManager from '../components/video/SourceManager';
 import { toast } from 'react-hot-toast';
-import { AnimatePresence } from 'framer-motion';
 import { getApiUrl } from '../utils/api';
 
 const MoviePlayer = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated, addToWatchlist, removeFromWatchlist, addToHistory } = useAuth();
-  const { getMovieById, trackPageView } = useMovie();
+  const { getMovieById } = useMovie();
 
   const [movie, setMovie] = useState(null);
   const [isInWatchlist, setIsInWatchlist] = useState(false);
@@ -72,14 +71,6 @@ const MoviePlayer = () => {
   };
 
   useEffect(() => {
-    // Disable analytics to prevent infinite loops
-    // if (isAuthenticated) {
-    //   trackPageView({
-    //     page: 'movie-player',
-    //     movieId: id,
-    //     userId: 'authenticated'
-    //   });
-    // }
     loadMovie();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]); // Only reload when movie ID changes
