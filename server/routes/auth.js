@@ -91,10 +91,6 @@ router.post('/register', [
 
 // Login user
 router.post('/login', [
-  body('username')
-    .trim()
-    .notEmpty()
-    .withMessage('Username or email is required'),
   body('password')
     .notEmpty()
     .withMessage('Password is required')
@@ -108,15 +104,32 @@ router.post('/login', [
       });
     }
 
-    const { username, password } = req.body;
+    const { username, email, password } = req.body;
+
+    // Validate that either username or email is provided
+    if (!username && !email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Username or email is required'
+      });
+    }
+
+    // Determine the identifier (email or username)
+    const identifier = email || username;
 
     // Find user by username or email
-    const user = await User.findOne({
-      $or: [
-        { username: username.toLowerCase() },
-        { email: username.toLowerCase() }
-      ]
-    });
+    // Check if identifier contains @ to determine if it's an email
+    const isEmailFormat = identifier.includes('@');
+    const user = await User.findOne(
+      isEmailFormat
+        ? { email: identifier.toLowerCase() }
+        : {
+            $or: [
+              { username: identifier.toLowerCase() },
+              { email: identifier.toLowerCase() }
+            ]
+          }
+    );
 
     if (!user) {
       return res.status(401).json({

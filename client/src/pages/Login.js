@@ -6,10 +6,7 @@ import {
   Lock, 
   Eye, 
   EyeOff, 
-  AlertCircle, 
-  CheckCircle,
-  Github,
-  Chrome
+  AlertCircle
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
@@ -20,7 +17,7 @@ const Login = () => {
   const { login, isAuthenticated } = useAuth();
 
   const [formData, setFormData] = useState({
-    email: '',
+    identifier: '', // Can be email or username
     password: '',
     rememberMe: false
   });
@@ -36,14 +33,19 @@ const Login = () => {
     }
   }, [isAuthenticated, navigate, location]);
 
+  // Helper function to detect if input is email or username
+  const isEmail = (input) => {
+    return /\S+@\S+\.\S+/.test(input);
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
-    // Email validation
-    if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+    // Email or Username validation
+    if (!formData.identifier) {
+      newErrors.identifier = 'Email or username is required';
+    } else if (formData.identifier.length < 3) {
+      newErrors.identifier = 'Must be at least 3 characters';
     }
 
     // Password validation
@@ -82,12 +84,20 @@ const Login = () => {
 
     setIsLoading(true);
     try {
-      // Backend expects 'username' field which can be email or username
-      await login({ 
-        username: formData.email, // Backend accepts email in username field
-        password: formData.password, 
-        rememberMe: formData.rememberMe 
-      });
+      // Determine if identifier is email or username and send appropriate field
+      const loginData = {
+        password: formData.password,
+        rememberMe: formData.rememberMe
+      };
+
+      // If identifier contains @, treat as email, otherwise as username
+      if (isEmail(formData.identifier)) {
+        loginData.email = formData.identifier;
+      } else {
+        loginData.username = formData.identifier;
+      }
+
+      await login(loginData);
       toast.success('Welcome back!');
       
       // Redirect to the page they were trying to access
@@ -99,10 +109,6 @@ const Login = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleSocialLogin = (provider) => {
-    toast.info(`${provider} login coming soon!`);
   };
 
   const handleForgotPassword = () => {
@@ -138,40 +144,40 @@ const Login = () => {
           onSubmit={handleSubmit}
           className="space-y-6"
         >
-          {/* Email Field */}
+          {/* Email or Username Field */}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-              Email Address
+            <label htmlFor="identifier" className="block text-sm font-medium text-gray-300 mb-2">
+              Email or Username
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Mail className="h-5 w-5 text-gray-400" />
               </div>
               <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
+                id="identifier"
+                name="identifier"
+                type="text"
+                autoComplete="username"
                 required
-                value={formData.email}
+                value={formData.identifier}
                 onChange={handleInputChange}
                 className={`block w-full pl-10 pr-3 py-3 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${
-                  errors.email 
+                  errors.identifier 
                     ? 'border-red-500 bg-red-500/10' 
                     : 'border-dark-600 bg-dark-800 hover:border-dark-500'
                 }`}
-                placeholder="Enter your email"
+                placeholder="Enter your email or username"
               />
-              {errors.email && (
+              {errors.identifier && (
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                   <AlertCircle className="h-5 w-5 text-red-500" />
                 </div>
               )}
             </div>
-            {errors.email && (
+            {errors.identifier && (
               <p className="mt-1 text-sm text-red-500 flex items-center">
                 <AlertCircle className="w-4 h-4 mr-1" />
-                {errors.email}
+                {errors.identifier}
               </p>
             )}
           </div>
@@ -262,40 +268,7 @@ const Login = () => {
           </button>
         </motion.form>
 
-        {/* Divider */}
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-dark-600" />
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-dark-950 text-gray-400">Or continue with</span>
-          </div>
-        </div>
 
-        {/* Social Login Buttons */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="grid grid-cols-2 gap-3"
-        >
-          <button
-            type="button"
-            onClick={() => handleSocialLogin('Google')}
-            className="w-full inline-flex justify-center py-3 px-4 border border-dark-600 rounded-lg shadow-sm bg-dark-800 text-sm font-medium text-gray-300 hover:bg-dark-700 hover:text-white transition-colors"
-          >
-            <Chrome className="h-5 w-5 mr-2" />
-            Google
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSocialLogin('GitHub')}
-            className="w-full inline-flex justify-center py-3 px-4 border border-dark-600 rounded-lg shadow-sm bg-dark-800 text-sm font-medium text-gray-300 hover:bg-dark-700 hover:text-white transition-colors"
-          >
-            <Github className="h-5 w-5 mr-2" />
-            GitHub
-          </button>
-        </motion.div>
 
         {/* Sign Up Link */}
         <motion.div
