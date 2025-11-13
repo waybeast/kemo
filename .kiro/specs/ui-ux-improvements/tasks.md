@@ -42,14 +42,14 @@
 
 ## Phase 2: Implement Intelligent Search
 
-- [ ] 5. Create useDebounce custom hook
+- [x] 5. Create useDebounce custom hook
   - Create client/src/hooks/useDebounce.js
   - Implement debounce logic with configurable delay (default 500ms)
   - Handle cleanup on unmount
   - Return debounced value
   - _Requirements: 3.1, 3.2, 7.4_
 
-- [ ] 6. Create useSearchSuggestions custom hook
+- [x] 6. Create useSearchSuggestions custom hook
   - Create client/src/hooks/useSearchSuggestions.js
   - Implement TMDb search API integration
   - Add request cancellation with AbortController
@@ -58,7 +58,7 @@
   - Only fetch when query length >= 2 characters
   - _Requirements: 3.1, 3.2, 3.3, 4.1, 7.1, 7.2, 7.3_
 
-- [ ] 7. Create SearchSuggestions component
+- [x] 7. Create SearchSuggestions component
   - Create client/src/components/search/SearchSuggestions.js
   - Display up to 10 movie suggestions in dropdown
   - Show movie poster, title, year, and rating
@@ -69,7 +69,7 @@
   - Use framer-motion for animations
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
 
-- [ ] 8. Create SearchBar component
+- [x] 8. Create SearchBar component
   - Create client/src/components/search/SearchBar.js
   - Integrate useDebounce hook
   - Integrate useSearchSuggestions hook
@@ -80,7 +80,7 @@
   - Handle direct search submission
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 4.1, 4.2, 4.3_
 
-- [ ] 9. Update Navbar to use new SearchBar component
+- [x] 9. Update Navbar to use new SearchBar component
   - Replace existing search input with SearchBar component
   - Update desktop search implementation
   - Update mobile search implementation
@@ -88,7 +88,7 @@
   - Test search functionality
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 4.1, 4.2, 4.3_
 
-- [ ] 10. Create/update backend search endpoint
+- [x] 10. Create/update backend search endpoint
   - Create or update GET /api/movies/search endpoint
   - Integrate with TMDb search API
   - Add query validation (minimum 2 characters)

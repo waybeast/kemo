@@ -4,31 +4,26 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useMovie } from '../../contexts/MovieContext';
 import { Search, Menu, X, User, LogOut, Heart, Settings, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import SearchBar from '../search/SearchBar';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const { user, isAuthenticated, logout } = useAuth();
   const { setSearchQuery: setGlobalSearchQuery } = useMovie();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Close search when navigating away from search page
+  // Close mobile search when navigating away from search page
   useEffect(() => {
     if (location.pathname !== '/search') {
       setIsSearchOpen(false);
-      setSearchQuery('');
     }
   }, [location.pathname]);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      setGlobalSearchQuery(searchQuery.trim());
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      setIsSearchOpen(false);
-    }
+  const handleSearch = (query) => {
+    setGlobalSearchQuery(query);
+    setIsSearchOpen(false);
   };
 
   const handleLogout = async () => {
@@ -69,18 +64,12 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* Search Bar */}
+          {/* Search Bar - Desktop */}
           <div className="flex-1 max-w-md mx-4 hidden md:block">
-            <form onSubmit={handleSearch} className="relative">
-              <input
-                type="text"
-                placeholder="Search movies..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-dark-800 border border-dark-600 rounded-lg pl-10 pr-4 py-2 text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              />
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-dark-400 w-4 h-4" />
-            </form>
+            <SearchBar 
+              onSearch={handleSearch}
+              placeholder="Search movies..."
+            />
           </div>
 
           {/* Mobile Search Button */}
@@ -195,17 +184,10 @@ const Navbar = () => {
               exit={{ opacity: 0, height: 0 }}
               className="md:hidden py-4"
             >
-              <form onSubmit={handleSearch} className="relative">
-                <input
-                  type="text"
-                  placeholder="Search movies..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-dark-800 border border-dark-600 rounded-lg pl-10 pr-4 py-2 text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  autoFocus
-                />
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-dark-400 w-4 h-4" />
-              </form>
+              <SearchBar 
+                onSearch={handleSearch}
+                placeholder="Search movies..."
+              />
             </motion.div>
           )}
         </AnimatePresence>

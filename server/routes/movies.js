@@ -152,44 +152,72 @@ router.get('/category/:category', cacheMiddleware({ ttl: 300, keyPrefix: 'route'
 // Search movies
 router.get('/search', cacheMiddleware({ ttl: 300, keyPrefix: 'route' }), async (req, res) => {
   try {
-    const { q, limit = 20 } = req.query;
+    const { q, limit = 10, page = 1 } = req.query;
     
+    // Validate query length (minimum 2 characters)
     if (!q || q.trim().length < 2) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Search query must be at least 2 characters long' 
+      return res.json({ 
+        success: true, 
+        data: [],
+        query: q || '',
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: 0
+        }
       });
     }
 
-    // Try to search in database first
+    // Search using TMDb API for autocomplete suggestions
+    // This provides rich data including posters, ratings, and release dates
     try {
-      const movies = await Movie.search(q.trim(), parseInt(limit));
+      const tmdbMovies = await tmdbService.searchMovies(q.trim(), parseInt(page), 'en-US');
       
-      return res.json({
-        success: true,
-        data: movies,
-        query: q,
-        count: movies.length
-      });
-    } catch (dbError) {
-      console.log('Database not available, falling back to TMDb API for search');
-      
-      // Fallback to TMDb API search
-      const tmdbMovies = await tmdbService.searchMovies(q.trim(), 1, 'en-US');
-      const movies = tmdbMovies.results ? 
-        tmdbMovies.results.slice(0, parseInt(limit)).map(movie => tmdbService.transformMovieData(movie)) : 
+      // Return raw TMDb data for autocomplete (includes poster_path, vote_average, etc.)
+      const results = tmdbMovies.results ? 
+        tmdbMovies.results.slice(0, parseInt(limit)) : 
         [];
       
       return res.json({
         success: true,
-        data: movies,
-        query: q,
-        count: movies.length
+        data: results,
+        query: q.trim(),
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: tmdbMovies.total_results || 0,
+          totalPages: tmdbMovies.total_pages || 0
+        }
       });
+    } catch (tmdbError) {
+      console.error('TMDb search error:', tmdbError);
+      
+      // Fallback to database search if TMDb fails
+      try {
+        const movies = await Movie.search(q.trim(), parseInt(limit));
+        
+        return res.json({
+          success: true,
+          data: movies,
+          query: q.trim(),
+          pagination: {
+            page: parseInt(page),
+            limit: parseInt(limit),
+            total: movies.length
+          }
+        });
+      } catch (dbError) {
+        console.error('Database search also failed:', dbError);
+        throw dbError;
+      }
     }
   } catch (error) {
     console.error('Error searching movies:', error);
-    res.status(500).json({ success: false, error: 'Failed to search movies' });
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to search movies',
+      data: []
+    });
   }
 });
 
