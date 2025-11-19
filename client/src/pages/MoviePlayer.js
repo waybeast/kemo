@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Heart, Share2, Download, ArrowLeft, Settings
+  Heart, Share2, ArrowLeft, Settings
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useMovie } from '../contexts/MovieContext';
@@ -171,10 +171,6 @@ const MoviePlayer = () => {
     }
   };
 
-  const handleDownload = () => {
-    toast.info('Download feature coming soon!');
-  };
-
   const handleError = (error) => {
     console.error('Video player error:', error);
     toast.error('Video playback error. Try another source.');
@@ -242,15 +238,6 @@ const MoviePlayer = () => {
             >
               <Share2 size={20} />
               <span className="hidden md:inline">Share</span>
-            </button>
-            
-            <button
-              onClick={handleDownload}
-              className="flex items-center space-x-2 text-white hover:text-blue-400 transition-colors"
-              title="Download"
-            >
-              <Download size={20} />
-              <span className="hidden md:inline">Download</span>
             </button>
           </div>
         </div>
